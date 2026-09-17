@@ -15,3 +15,12 @@ postman API docs: https://documenter.getpostman.com/view/56000409/2sBYB1NTZ2
 
 #### Application Startup
     docker-compose up --build
+
+#### Examples of supported queries:
+
+- What is the issue with order #orderId, The user isn't able to complete payment.
+- Give me a full summary of the order #orderId.
+- Can you check the payment and delivery status of the order #orderId. The user says payment is completed but he hasn't received the delivery for quite sometime.
+- Initiate a refund for the order #orderId.
+
+The query response is provided in HTML format.
