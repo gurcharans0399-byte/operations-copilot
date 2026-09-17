@@ -1,0 +1,76 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: cars24-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB_NAME}
+      POSTGRES_USER: ${POSTGRES_DB_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "8083:8083"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB_NAME}
+      DB_USERNAME: ${POSTGRES_DB_USER}
+      DB_PASSWORD: ${POSTGRES_DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+
+  order-service:
+    build:
+      context: ./orderservice
+      dockerfile: Dockerfile
+    container_name: order-service
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB_NAME}
+      DB_USERNAME: ${POSTGRES_DB_USER}
+      DB_PASSWORD: ${POSTGRES_DB_PASSWORD}
+
+  query-service:
+    build:
+      context: ./queryservice
+      dockerfile: Dockerfile
+    container_name: query-service
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - order-service
+      - auth-service
+    ports:
+      - "8082:8082"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB_NAME}
+      DB_USERNAME: ${POSTGRES_DB_USER}
+      DB_PASSWORD: ${POSTGRES_DB_PASSWORD}
+      ORDER_SERVICE_URL: http://order-service:8081
+      AUTH_SERVICE_URL: http://auth-service:8083
+      JWT_SECRET: ${JWT_SECRET}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+
+volumes:
+  postgres_data:

@@ -1,0 +1,82 @@
+1. prompt template based on intent ?
+    - (invalid) validate the output and retry
+    - Add description to tools, use default tools
+    - (Done) Add chat history to the chatclient calls
+    - asynchronous reponse required ?
+    - add metadata to the chatClient
+    - (Done) log along with conversation Id
+    - (Done) Log systemMessage only Once - customLogger
+    - (Done) Add advisor with chat Memory for better results -
+2. Add basic tests
+4. (Don) separate out chatclient configuration
+    - (Done) Default system message to the ChatClient
+    - (Done) Default tools
+    - Temperature setting
+5. (Not needed) Add support for storing conversation history (?)
+6. (Done) RestControllerAdvise
+7. (Done) Observability
+    - (Don) logging tool calling: https://docs.spring.io/spring-ai/reference/observability/index.html#_tool_calling
+    - (Done) Token used number
+8. Remove passwords from application.yml
+9. (Done) check description of tools
+9. Remove model's direct access to the APIs behind your tools
+10. (Done) Add functionality for support agents to write to the DB, user-consented tool calling
+    - Mark user query complete
+    - needs consent
+11. (Done) Separate out constants
+12. (Done) Spring security
+
+Tomorrow:
+- Identify the test and edge cases to showcase
+- Create service, seed data
+- Use docker for deployment
+- Add logs for latency:
+    - request latency
+      LLM latency
+      tool latency
+- Store in DB:
+      token usage
+      conversationId
+      errors
+      model
+      tool failures
+
+1. Add manualActionRequired flag to the tool calling response
+1. Time your API calls and log the latency for each call.
+1. What is the status of OrderId #12344
+    findOrderIdById()
+2. What is the payment status of orderId #2432
+    findPaymentByOrderId()
+3. What is the payment status of paymentId #5322
+    findLatestPaymentById()
+4. List the payment attempts made for the orderId #34543
+    findAllPaymentByOrderId()
+5. What is the delivery status of orderId #245234
+    findDeliveryByOrderId()
+6. When was the delivery completed for orderId#5324
+    findDeliverybyOrderId()
+7. how much time did it take to ship the order #f17850de-9075-445e-afa5-64a71c730d09
+8. When did the order #f17850de-9075-445e-afa5-64a71c730d09 leave the shipping facility
+9. How long has this order been in shipped state #8c29e942-5dd6-40b7-8bde-26f15a9146b7
+9. Refund status of orderId #64533
+    findRefundbyOrderId()
+10. Total amount of the orders refunded in the last month
+    findAllRefundsInTimePeriod()
+11. Reason for most refunds in the past one month
+    findAllRefundsInTimePeriod()
+10. WRITE - Initiate a refund for orderId #69484
+6. All prepaid orders in pending-shipment state for the past 5 days
+    findAllOrdersByPaymentModeForTimerPeriod()
+7. All orders updated from pending-shipment state to shipped in the last 24 hours (time can vary)
+    findAllOrderByOrderStatusforTimePeriod()
+7. All customer whose payment failed within the last 1 hour
+    along with failure reason and payment mode
+    findPaymentByStatusforTimePeriod()
+8. All customers who made order for above 5k in the last one month
+    findAllOrderByValueforTimePeriod(), findUserById()
+
+
+Final Demo:
+1. What is the issue with order #5debce8f-79e6-42d5-bedd-343b9c1ac0c0, The user isn't able to complete payment
+2. Can you please check the payment and delivery status of the order #88e1d599-5318-4a42-b163-eb1dae2b7013. The user says payment is completed but he hasn't received the delivery for quite sometime
+3. Give me a full summary of the order #ecc319ad-dd1c-4e13-92d3-f1d99a3b9b3c
