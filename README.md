@@ -16,6 +16,15 @@ postman API docs: https://documenter.getpostman.com/view/56000409/2sBYB1NTZ2
 #### Application Startup
     docker-compose up --build
 
+#### Startup Logs:
+Seed order Ids are logged to the console at startup as:<br>
+```
+order-service    | All Orders: 
+order-service    | Id: 6bf769f1-f614-49c4-8675-285ff2b7fe78 status: DELIVERED
+order-service    | Id: 909e7b2c-1342-4351-a3a6-d875eb536b89 status: PAYMENT_ERROR
+order-service    | Id: 7d5e1751-aadc-4b46-a3b2-1e79bb67dfe9 status: SHIPPED
+```
+
 #### Examples of supported queries:
 
 - What is the issue with order #orderId, The user isn't able to complete payment.
