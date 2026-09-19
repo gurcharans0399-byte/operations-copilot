@@ -32,4 +32,9 @@ order-service    | Id: 7d5e1751-aadc-4b46-a3b2-1e79bb67dfe9 status: SHIPPED
 - Can you check the payment and delivery status of the order #orderId. The user says payment is completed but he hasn't received the delivery for quite sometime.
 - Initiate a refund for the order #orderId.
 
-The query response is provided in HTML format.
+#### To Do:
+- Make all API responses consistent and include:
+    - userAction
+    - proposedActionType
+- Record llm responses against a variety of queries
+- Add rate-limit checks for LLM
