@@ -6,7 +6,6 @@ import com.opcopilot.queryservice.model.*;
 import com.opcopilot.queryservice.repository.ProposedActionRepository;
 import com.opcopilot.queryservice.repository.ProposedRefundUpdateRepository;
 import com.opcopilot.queryservice.restclient.OrderServiceClient;
-import com.opcopilot.queryservice.dto.OrderMetadataResponse;
 import com.opcopilot.queryservice.dto.OrderStatusResponse;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
@@ -19,28 +18,23 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class OrderService {
+public class OrderServiceTools {
 
     private final OrderServiceClient orderServiceClient;
     private final ProposedRefundUpdateRepository proposedRefundUpdateRepository;
     private final ProposedActionRepository proposedActionRepository;
 
-    OrderService(OrderServiceClient orderServiceClient,
-                 ProposedRefundUpdateRepository proposedRefundUpdateRepository,
-                 ProposedActionRepository proposedActionRepository) {
+    OrderServiceTools(OrderServiceClient orderServiceClient,
+                      ProposedRefundUpdateRepository proposedRefundUpdateRepository,
+                      ProposedActionRepository proposedActionRepository) {
         this.orderServiceClient = orderServiceClient;
         this.proposedRefundUpdateRepository = proposedRefundUpdateRepository;
         this.proposedActionRepository = proposedActionRepository;
     }
 
-    @Tool(description = "fetch the status and last updated date of an order")
+    @Tool(description = "fetch all details for an order")
     OrderStatusResponse getOrderStatus(@ToolParam(description = "order ID") String orderId) {
         return orderServiceClient.getOrderStatus(orderId);
-    }
-
-    @Tool(description = "Fetch the user details and order amount for an order ID")
-    OrderMetadataResponse getOrderMetadata(@ToolParam(description = "order ID") String orderId) {
-        return orderServiceClient.getOrderMetadata(orderId);
     }
 
     @Tool(description = "Fetch all the payment transactions made corresponding to an order ID or any specific payment" +
@@ -64,9 +58,9 @@ public class OrderService {
         return orderServiceClient.getDeliveryLog(orderId);
     }
 
-    // Update SystemMessage
-    @Tool(description = "Initiate a refund for an order and create the corresponding ProposedAction to capture the " +
-            "consent workflow. Only use this tool if the user has explicitly requested a refund")
+    @Tool(description = "Initiate a refund for an order and create ProposedAction. Only use this tool if the user has" +
+            " explicitly requested a refund. Mannual Action required if this tool is executed successfully. " +
+            "ProposedActionType: INITIATE_REFUND/ACCEPT_REFUND/REJECT_REFUND")
     public Map<String, String> proposeRefund(@ToolParam(description = "order ID") String orderId,
                                @ToolParam(description = "refund state") RefundState refundState,
                                @ToolParam(description = "reason for refund") String reason,
@@ -100,6 +94,8 @@ public class OrderService {
         Map<String, String> response = new HashMap<>();
         response.put("viewProposedActionUrl", "/user/proposed-action/{proposedActionId}");
         response.put("proposedActionId", String.valueOf(savedAction.getId()));
+        response.put("proposedActionType", ActionType.INITIATE_REFUND.toString());
+        response.put("userAction", "[VIEW_PROPOSED_ACTION]");
         return response;
     }
 

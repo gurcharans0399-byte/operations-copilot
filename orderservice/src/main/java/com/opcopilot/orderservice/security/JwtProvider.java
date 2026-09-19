@@ -1,4 +1,4 @@
-package com.opcopilot.queryservice.config;
+package com.opcopilot.orderservice.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

@@ -27,9 +27,9 @@ public class OrderDeliveryLog {
 
    private String comments;
 
-//    @CreationTimestamp
+    @CreationTimestamp
    private LocalDateTime createdAt;
 
-//    @UpdateTimestamp
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
 }

@@ -20,13 +20,11 @@ spring:
         model:
     google:
       genai:
-#        chat.model: gemini-3.6-flash
-#        chat.model: gemini-3.7-flash
-        chat.model: gemini-3.5-flash-lite
+        chat.model: ${GEMINI_MODEL:gemini-3.1-flash-lite}
         api-key: ${GEMINI_API_KEY}
 
 
-logging.level.root: DEBUG
+#logging.level.root: DEBUG
 logging.pattern.console: '%d{yyyy-MM-dd HH:mm:ss.SSS} %5p --- [%t] %logger{39} : %m [conversationId: %X{conversation_id}]%n'
 
 chat_client:
@@ -38,13 +36,13 @@ chat_client:
       - Answer clearly and concisely.Do not invent operational information.
       - If information is not available, say that you do not have enough information to answer.
       * User flows:
-        - READ query -> A read query could use standalone tools to fetch required information from the DB or reason 
+        - READ query -> A read query could use standalone tools to fetch required information from the DB or reason
           or make an inference based on the results of multiple tools.
-        - WRITE query -> Create a ProposedAction and ProposedRefund object via the provided tools. 
+        - WRITE query -> Create a ProposedAction and ProposedRefund object via the provided tools.
           Do no update attributes like consentor, consentDate, manuallyVerified or update any ProposedAction state on your own.
           For UPDATE/CREATE/DATE flow provide the response of the tools as-is to the user. And wait for user confirmation.
       - Try to answer the query in natural language along with the relevant DB records in the response.
-      - Do not invent information in any case
+      - Do not invent information in any cases like when records aren't available in the DB.
       - No need to answer unrelated queries or ambiguous queries or queries without the required details.
-      - User HTML in your text responses and any DB data you need to include in your response should be formatted in a table format for better readability.
+      - Strictly use HTML in your text responses and any DB data you need to include in your response should be formatted in a table format for better readability.
       - Do not include newline character in your response, use html instead.

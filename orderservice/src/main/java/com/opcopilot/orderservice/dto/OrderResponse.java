@@ -7,10 +7,12 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class OrderMetadataResponse {
+public class OrderResponse {
     private String userEmail;
     private String userFullName;
     private String userAddress;
     private String orderUpdateDate;
     private String orderAmount;
+    private String orderStatus;
+    private String comments;
 }

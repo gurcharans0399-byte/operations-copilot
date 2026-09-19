@@ -1,12 +1,14 @@
 package com.opcopilot.orderservice.utility;
 
+import com.opcopilot.orderservice.dto.UserDetailResponse;
 import com.opcopilot.orderservice.model.*;
 import com.opcopilot.orderservice.repository.DeliveryRepository;
 import com.opcopilot.orderservice.repository.OrderRepository;
 import com.opcopilot.orderservice.repository.PaymentRepository;
-import com.opcopilot.orderservice.repository.UserRepository;
+import com.opcopilot.orderservice.security.AuthContextUtil;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,40 +17,39 @@ import java.util.List;
 @Component
 public class DataSeed implements CommandLineRunner {
     private OrderRepository orderRepository;
-    private UserRepository userRepository;
     private PaymentRepository paymentRepository;
     private DeliveryRepository deliveryRepository;
+    private RestTemplate restTemplate;
+    private AuthContextUtil authContextUtil;
 
     DataSeed(OrderRepository orderRepository,
-             UserRepository userRepository,
              PaymentRepository paymentRepository,
-             DeliveryRepository deliveryRepository) {
+             DeliveryRepository deliveryRepository,
+             RestTemplate restTemplate,
+             AuthContextUtil authContextUtil) {
         this.orderRepository = orderRepository;
-        this.userRepository = userRepository;
         this.paymentRepository = paymentRepository;
         this.deliveryRepository = deliveryRepository;
+        this.restTemplate = restTemplate;
+        this.authContextUtil = authContextUtil;
     }
 
     @Override
     public void run(String... args) throws Exception {
-        User user = User.builder()
-                .fullName("Gurcharan Singh")
-                .email("someone@gmail.com")
-                .build();
+        UserDetailResponse userDetails = authContextUtil.getUserDetailsFromAuthService("admin@gmail.com");
 
-        userRepository.save(user);
 
-        Order order1 = Order.builder().user(user).status(OrderStatus.DELIVERED).amount(new BigDecimal("2001.5"))
+        Order order1 = Order.builder().userId(userDetails.getId().toString()).status(OrderStatus.DELIVERED).amount(new BigDecimal("2001.5"))
                 .creationDate(LocalDateTime.now())
                 .updateDate(LocalDateTime.now())
                 .build();
 
-        Order order2 = Order.builder().user(user).status(OrderStatus.PAYMENT_ERROR).amount(new BigDecimal("2002.5"))
+        Order order2 = Order.builder().userId(userDetails.getId().toString()).status(OrderStatus.PAYMENT_ERROR).amount(new BigDecimal("2002.5"))
                 .creationDate(LocalDateTime.now())
                 .updateDate(LocalDateTime.now())
                 .build();
 
-        Order order3 = Order.builder().user(user).status(OrderStatus.SHIPPED).amount(new BigDecimal("2003.5"))
+        Order order3 = Order.builder().userId(userDetails.getId().toString()).status(OrderStatus.SHIPPED).amount(new BigDecimal("2003.5"))
                 .creationDate(LocalDateTime.of(2026, 9, 10, 10,10))
                 .updateDate(LocalDateTime.of(2026, 9, 11, 10,10))
                 .build();
@@ -57,10 +58,10 @@ public class DataSeed implements CommandLineRunner {
         Order savedOrder2 = orderRepository.save(order2);
         Order savedOrder3 = orderRepository.save(order3);
 
-        PaymentTransaction payment1 = PaymentTransaction.builder().user(user).order(order1).status(PaymentStatus.COMPLETED).build();
-        PaymentTransaction payment2 = PaymentTransaction.builder().user(user).order(order2).status(PaymentStatus.TIMED_OUT).error("Internal Server error").build();
-        PaymentTransaction payment3 = PaymentTransaction.builder().user(user).order(order2).status(PaymentStatus.GATEWAY_ERROR).error("Gateway down for maintenance").build();
-        PaymentTransaction payment4 = PaymentTransaction.builder().user(user).order(order3).status(PaymentStatus.COMPLETED).build();
+        PaymentTransaction payment1 = PaymentTransaction.builder().userId(userDetails.getId().toString()).order(order1).status(PaymentStatus.COMPLETED).build();
+        PaymentTransaction payment2 = PaymentTransaction.builder().userId(userDetails.getId().toString()).order(order2).status(PaymentStatus.TIMED_OUT).error("Internal Server error").build();
+        PaymentTransaction payment3 = PaymentTransaction.builder().userId(userDetails.getId().toString()).order(order2).status(PaymentStatus.GATEWAY_ERROR).error("Gateway down for maintenance").build();
+        PaymentTransaction payment4 = PaymentTransaction.builder().userId(userDetails.getId().toString()).order(order3).status(PaymentStatus.COMPLETED).build();
 
         paymentRepository.saveAll(List.of(payment1, payment2, payment3, payment4));
 
@@ -104,9 +105,8 @@ public class DataSeed implements CommandLineRunner {
         deliveryRepository.saveAll(List.of(delivery1, delivery2, delivery3, delivery4, delivery5, delivery6));
 
         System.out.println("All Orders: ");
-        orderRepository.findAll().stream()
-                .forEach( o -> System.out.println("Id: " + o.getOrderId().toString()
-                        + " status: " + o.getStatus().toString()
-                        + " amount: " + o.getAmount().toString()));
+        List.of(savedOrder1, savedOrder2, savedOrder3).stream()
+                        .forEach(o -> System.out.println("Id: " + o.getOrderId().toString()
+                                + " status: " + o.getStatus().toString()));
     }
 }

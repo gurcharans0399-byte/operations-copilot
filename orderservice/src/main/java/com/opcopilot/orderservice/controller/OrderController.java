@@ -1,73 +1,69 @@
 package com.opcopilot.orderservice.controller;
 
-import com.opcopilot.orderservice.dto.OrderMetadataResponse;
-import com.opcopilot.orderservice.dto.OrderStatusResponse;
+import com.opcopilot.orderservice.dto.OrderResponse;
 import com.opcopilot.orderservice.dto.RefundRequest;
-import com.opcopilot.orderservice.exception.InvalidAPIParameterException;
+import com.opcopilot.orderservice.dto.UserDetailResponse;
+import com.opcopilot.orderservice.exception.InvalidAPIRequestException;
+import com.opcopilot.orderservice.exception.InvalidFeignCallException;
 import com.opcopilot.orderservice.model.Order;
 import com.opcopilot.orderservice.model.Refund;
-import com.opcopilot.orderservice.model.User;
 import com.opcopilot.orderservice.repository.OrderRepository;
 import com.opcopilot.orderservice.repository.RefundRepository;
-import com.opcopilot.orderservice.repository.UserRepository;
-import org.springframework.http.HttpStatus;
+import com.opcopilot.orderservice.security.AuthContextUtil;
+import com.opcopilot.orderservice.service.OrderService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.UUID;
 
 @RestController
 public class OrderController {
 
+    private static final Logger logger = LoggerFactory.getLogger(OrderController.class);
+
     OrderRepository orderRepository;
-    UserRepository userRepository;
     RefundRepository refundRepository;
+    OrderService orderService;
+    RestTemplate restTemplate;
+    AuthContextUtil authContextUtil;
 
-    OrderController(OrderRepository orderRepository, UserRepository userRepository, RefundRepository refundRepository) {
+    OrderController(OrderRepository orderRepository,
+                    RefundRepository refundRepository,
+                    OrderService orderService,
+                    RestTemplate restTemplate,
+                    AuthContextUtil authContextUtil) {
         this.orderRepository = orderRepository;
-        this.userRepository = userRepository;
         this.refundRepository = refundRepository;
+        this.orderService = orderService;
+        this.restTemplate = restTemplate;
+        this.authContextUtil = authContextUtil;
     }
 
-    @GetMapping("/order/status/{orderId}")
-    public OrderStatusResponse getOrderStatus(@PathVariable String orderId) {
+    @GetMapping("/order/{orderId}")
+    public OrderResponse getOrderInfo(@PathVariable String orderId) {
         UUID parsedOrderId;
         try {
             parsedOrderId = UUID.fromString(orderId);
         } catch (IllegalArgumentException ex) {
-            throw new InvalidAPIParameterException("Invalid orderId provided: " + orderId);
+            throw new InvalidAPIRequestException("Invalid orderId provided: " + orderId);
         }
 
         Order order = orderRepository.findById(parsedOrderId)
-                .orElseThrow(() -> new RuntimeException("Order not found for orderId: " + orderId));
-        OrderStatusResponse orderStatus = OrderStatusResponse.builder()
-                .orderStatus(order.getStatus().toString())
-                .orderUpdateDate(order.getUpdateDate().toString())
-                .comments(order.getComments())
-                .build();
-        return orderStatus;
-    }
+                .orElseThrow(() -> new InvalidAPIRequestException("Order not found for orderId: " + orderId));
 
-    @GetMapping("/order/metadata/{orderId}")
-    public OrderMetadataResponse getOrderMetadata(@PathVariable String orderId) {
-        UUID parsedOrderId;
-        try {
-            parsedOrderId = UUID.fromString(orderId);
-        } catch (IllegalArgumentException ex) {
-            throw new InvalidAPIParameterException("Invalid orderId provided: " + orderId);
-        }
+        UserDetailResponse userDetails = authContextUtil.getLoggedInUserDetailsFromAuthService();
 
-        Order order = orderRepository.findById(parsedOrderId)
-                .orElseThrow(() -> new InvalidAPIParameterException("Order not found for orderId: " + orderId));
-        User user = userRepository.findById(order.getUser().getUserId()).orElseThrow(() -> new InvalidAPIParameterException(
-                "User not found for order: " + orderId));
-
-        OrderMetadataResponse orderMetadata = OrderMetadataResponse.builder()
-                .userEmail(user.getEmail())
-                .userFullName(user.getFullName())
-                .userAddress(user.getAddress())
+        OrderResponse orderMetadata = OrderResponse.builder()
+                .userEmail(userDetails.getEmail())
+                .userFullName(userDetails.getName())
                 .orderAmount(order.getAmount().toString())
                 .orderUpdateDate(order.getUpdateDate().toString())
+                .orderStatus(order.getStatus().toString())
+                .comments(order.getComments())
                 .build();
 
         return orderMetadata;
@@ -79,40 +75,18 @@ public class OrderController {
         try {
             parsedOrderId = UUID.fromString(orderId);
         } catch (IllegalArgumentException ex) {
-            throw new InvalidAPIParameterException("Invalid orderId provided: " + orderId);
+            throw new InvalidAPIRequestException("Invalid orderId provided: " + orderId);
         }
 
         Order order = orderRepository.findById(parsedOrderId)
-                .orElseThrow(() -> new InvalidAPIParameterException("Order not found for orderId: " + orderId));
+                .orElseThrow(() -> new InvalidAPIRequestException("Order not found for orderId: " + orderId));
 
-        if (refundRequest.getReason() == null || refundRequest.getReason().isBlank()) {
-            throw new InvalidAPIParameterException("Reason is required for refund");
+        if (refundRequest.getReason() == null || refundRequest.getReason().isBlank()
+                || refundRequest.getRefundState() == null) {
+            throw new InvalidAPIRequestException("Reason and RefundState are required for refund");
         }
 
-        if (refundRequest.getRefundState() == null) {
-            throw new InvalidAPIParameterException("RefundState is required for refund");
-        }
-
-        // Check if refund already exists for this order
-        var existingRefund = refundRepository.findByOrder(order);
-        
-        if (existingRefund.isPresent()) {
-            // Update existing refund
-            Refund refund = existingRefund.get();
-            refund.setReason(refundRequest.getReason());
-            refund.setRefundState(refundRequest.getRefundState());
-            Refund updatedRefund = refundRepository.save(refund);
-            return ResponseEntity.ok(updatedRefund);
-        } else {
-            // Create new refund
-            Refund refund = Refund.builder()
-                    .order(order)
-                    .reason(refundRequest.getReason())
-                    .refundState(refundRequest.getRefundState())
-                    .build();
-
-            Refund savedRefund = refundRepository.save(refund);
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedRefund);
-        }
+        Refund refund = orderService.updateOrCreateRefund(order, refundRequest);
+        return ResponseEntity.ok(refund);
     }
 }

@@ -2,7 +2,6 @@ package com.opcopilot.queryservice.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.opcopilot.queryservice.model.ActionType;
-import com.opcopilot.queryservice.model.ProposedRefundUpdate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,22 +9,16 @@ import lombok.Setter;
 
 import java.util.List;
 
-@Setter
 @Getter
-@AllArgsConstructor
+@Setter
 @NoArgsConstructor
-public class QueryResponse {
+@AllArgsConstructor
+public class LlmResponse {
     private String response;
     private boolean manualActionRequired;
 
     @JsonIgnore
-    private ActionType proposedActionType;
-    @JsonIgnore
-    private ProposedRefundUpdate proposedRefundUpdate;
-    @JsonIgnore
     private List<String> userAction;
-
-    private Integer promptToken;
-    private Integer responseToken;
-    private Integer conversationTokens;
+    @JsonIgnore
+    private ActionType proposedActionType;
 }

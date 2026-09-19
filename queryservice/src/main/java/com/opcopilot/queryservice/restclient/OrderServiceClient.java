@@ -15,11 +15,8 @@ import java.util.List;
         url = "${order-service.url:http://localhost:8081}"
 )
 public interface OrderServiceClient {
-    @GetMapping("/order/status/{orderId}")
+    @GetMapping("/order/{orderId}")
     public OrderStatusResponse getOrderStatus(@PathVariable String orderId);
-
-    @GetMapping("/order/metadata/{orderId}")
-    public OrderMetadataResponse getOrderMetadata(@PathVariable String orderId);
 
     @GetMapping("/order/{orderId}/payment")
     public List<PaymentResponse> getPaymentByOrder(@PathVariable String orderId);

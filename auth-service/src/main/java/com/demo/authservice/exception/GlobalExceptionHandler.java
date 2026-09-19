@@ -1,4 +1,4 @@
-package com.opcopilot.orderservice.exception;
+package com.demo.authservice.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,15 +10,15 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(InvalidAPIRequestException.class)
-    public ResponseEntity<Map<String, String>> handleInvalidIdException(InvalidAPIRequestException ex) {
+    @ExceptionHandler(InvalidAPIParameterException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidIdException(InvalidAPIParameterException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("error", ex.getMessage()));
     }
 
-    @ExceptionHandler(InvalidFeignCallException.class)
-    public ResponseEntity<Map<String, String>> handleFailedFeignClientCall(InvalidFeignCallException ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(AuthCredentialExceptions.class)
+    public ResponseEntity<Map<String, String>> handleInvalidAuthCredsException(InvalidAPIParameterException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("error", ex.getMessage()));
     }
 }

@@ -1,42 +1,18 @@
 package com.demo.authservice.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.util.UUID;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserDetailResponse {
     private UUID id;
     private String email;
     private String name;
-
-    public UserDetailResponse() {
-    }
-
-    public UserDetailResponse(UUID id, String email, String name) {
-        this.id = id;
-        this.email = email;
-        this.name = name;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 }

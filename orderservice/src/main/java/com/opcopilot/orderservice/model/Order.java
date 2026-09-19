@@ -23,9 +23,7 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID orderId;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private String userId;
 
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
@@ -34,9 +32,9 @@ public class Order {
 
     private BigDecimal amount;
 
-//    @CreationTimestamp
+    @CreationTimestamp
     private LocalDateTime creationDate;
 
-//    @UpdateTimestamp
+    @UpdateTimestamp
     private LocalDateTime updateDate;
 }

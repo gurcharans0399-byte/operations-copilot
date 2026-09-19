@@ -1,7 +1,7 @@
 package com.opcopilot.orderservice.controller;
 
 import com.opcopilot.orderservice.dto.DeliveryResponse;
-import com.opcopilot.orderservice.exception.InvalidAPIParameterException;
+import com.opcopilot.orderservice.exception.InvalidAPIRequestException;
 import com.opcopilot.orderservice.model.OrderDeliveryLog;
 import com.opcopilot.orderservice.repository.DeliveryRepository;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,13 +27,10 @@ public class DeliveryController {
         try {
             parsedOrderId = UUID.fromString(orderId);
         } catch (IllegalArgumentException ex) {
-            throw new InvalidAPIParameterException("Invalid orderId provided: " + orderId);
+            throw new InvalidAPIRequestException("Invalid orderId provided: " + orderId);
         }
 
         List<OrderDeliveryLog> deliveryLogs = deliveryRepository.findByOrder_orderId(parsedOrderId);
-        if(deliveryLogs.size() == 0) {
-            throw new InvalidAPIParameterException("No delivery logs found for orderId: " + orderId);
-        }
         List<DeliveryResponse> deliveryLogList = deliveryLogs.stream()
                 .map(deliveryLog -> new DeliveryResponse(deliveryLog.getId().toString(),
                         deliveryLog.getOrder().getOrderId().toString(),

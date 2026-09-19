@@ -1,8 +1,5 @@
-package com.opcopilot.queryservice.config;
+package com.opcopilot.orderservice.security;
 
-import lombok.Getter;
-
-@Getter
 public class JwtUserDetails {
     private final String email;
     private final String name;
@@ -10,5 +7,13 @@ public class JwtUserDetails {
     public JwtUserDetails(String email, String name) {
         this.email = email;
         this.name = name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getName() {
+        return name;
     }
 }

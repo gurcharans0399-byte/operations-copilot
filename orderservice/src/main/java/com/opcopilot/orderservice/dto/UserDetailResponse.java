@@ -1,16 +1,18 @@
-package com.demo.authservice.dto;
+package com.opcopilot.orderservice.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class AuthTokenResponse {
-    private String token;
-    private String tokenType;
-    private long expiresIn;
+public class UserDetailResponse {
+    private UUID id;
+    private String email;
+    private String name;
 }

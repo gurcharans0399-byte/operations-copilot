@@ -1,31 +1,29 @@
 package com.opcopilot.queryservice.controller;
 
-import com.opcopilot.queryservice.model.ProposedAction;
-import com.opcopilot.queryservice.model.ActionState;
+import com.opcopilot.queryservice.dto.LlmResponse;
+import com.opcopilot.queryservice.model.Conversation;
+import com.opcopilot.queryservice.repository.ConversationRepository;
 import com.opcopilot.queryservice.repository.ProposedActionRepository;
 import com.opcopilot.queryservice.restclient.OrderServiceClient;
-import com.opcopilot.queryservice.dto.OrderStatusResponse;
 import com.opcopilot.queryservice.dto.QueryRequest;
 import com.opcopilot.queryservice.dto.QueryResponse;
-import com.opcopilot.queryservice.service.OrderService;
-import com.opcopilot.queryservice.utility.CustomChatLoggerAdvisor;
+import com.opcopilot.queryservice.service.OrderServiceTools;
+import com.opcopilot.queryservice.util.LlmUtil;
 import com.opcopilot.queryservice.utility.ChatMemoryUtility;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.ChatClientResponse;
-import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/opcopilot")
@@ -33,23 +31,24 @@ public class OperationsQueryController {
 
     private static final Logger logger = LoggerFactory.getLogger(OperationsQueryController.class);
     private final ChatClient aiChatClient;
-    private ChatMemory chatMemory;
     private final OrderServiceClient orderServiceClient;
-    private final OrderService orderService;
+    private final OrderServiceTools orderServiceTools;
     private final ProposedActionRepository proposedActionRepository;
+    private final LlmUtil llmUtil;
     private String systemMessage;
 
     OperationsQueryController(@Qualifier("geminiChatClient") ChatClient chatClient,
-                              ChatMemory chatMemory,
                               OrderServiceClient orderServiceClient,
-                              OrderService orderService,
+                              OrderServiceTools orderServiceTools,
                               ProposedActionRepository proposedActionRepository,
+                              LlmUtil llmUtil,
                               @Value("${chat_client.config.system_message}")
                               String systemPrompt) {
         this.aiChatClient = chatClient;
         this.orderServiceClient = orderServiceClient;
-        this.orderService = orderService;
+        this.orderServiceTools = orderServiceTools;
         this.proposedActionRepository = proposedActionRepository;
+        this.llmUtil = llmUtil;
         this.systemMessage = systemPrompt;
     }
 
@@ -63,28 +62,25 @@ public class OperationsQueryController {
         }
         conversationId = ChatMemoryUtility.getOrsetConversationIdCookie(response, conversationId);
         MDC.put("conversation_id", conversationId);
-        if(!noCall) {
-            String finalConversationId = conversationId;
-            ChatClientResponse chatResponse = aiChatClient.prompt()
-                    .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, finalConversationId))
-                    .user(queryRequest.getQuery())
-                    .tools(orderService)
-                    .call()
-                    .chatClientResponse();
 
-            QueryResponse queryResponse = new QueryResponse();
-            chatResponse.chatResponse().getResults().forEach( result -> {
-                result.getOutput().getToolCalls().forEach( toolCall -> {
-                    if (toolCall.name() == "proposeRefund") {
-                        queryResponse.setManualActionRequired(true);
-                    }
-                });
-            });
+        String finalConversationId = conversationId;
+        org.springframework.ai.chat.client.ResponseEntity<ChatResponse, LlmResponse> chatResponse = aiChatClient.prompt()
+                .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, finalConversationId))
+                .user(queryRequest.getQuery())
+                .tools(orderServiceTools)
+                .call()
+                .responseEntity(LlmResponse.class, spec -> spec.validateSchema());
 
-            queryResponse.setQueryResponse(chatResponse.chatResponse().getResults().get(0).getOutput().getText());
-            return queryResponse;
-        }
-        return null;
+        Integer promptTokens = chatResponse.getResponse().getMetadata().getUsage().getPromptTokens();
+        Integer responseTokens = chatResponse.getResponse().getMetadata().getUsage().getCompletionTokens();
+
+        Conversation conversation = llmUtil.updateOrCreateConversationAndTokens(conversationId,
+                promptTokens + responseTokens);
+
+        return new QueryResponse(chatResponse.getEntity().getResponse(),
+                chatResponse.getEntity().isManualActionRequired(),
+                null, null, chatResponse.getEntity().getUserAction(),
+                promptTokens, responseTokens, conversation.getTokens());
     }
 
     @PostMapping("/close")

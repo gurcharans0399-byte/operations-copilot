@@ -1,7 +1,7 @@
 package com.opcopilot.orderservice.controller;
 
 import com.opcopilot.orderservice.dto.PaymentResponse;
-import com.opcopilot.orderservice.exception.InvalidAPIParameterException;
+import com.opcopilot.orderservice.exception.InvalidAPIRequestException;
 import com.opcopilot.orderservice.model.PaymentTransaction;
 import com.opcopilot.orderservice.repository.PaymentRepository;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,7 +33,7 @@ public class PaymentController {
             List<PaymentTransaction> paymentsByOrderId = paymentRepository.findByOrder_orderId(UUID.fromString(orderId));
             List<PaymentResponse> paymentResponseList = paymentsByOrderId.stream()
                     .map(payment -> new PaymentResponse(payment.getOrder().getOrderId().toString(),
-                            payment.getUser().getUserId().toString(),
+                            payment.getUserId().toString(),
                             payment.getStatus().toString(),
                             payment.getError(),
                             payment.getTimestamp().toString()))
@@ -42,14 +42,13 @@ public class PaymentController {
         }
         else if(paymentId != null) {
             PaymentTransaction payment =
-                    paymentRepository.findById(UUID.fromString(paymentId)).orElseThrow(() -> new InvalidAPIParameterException("Payment not found for paymentId: " + paymentId));
-//            payment.orElseThrow() exception handling -> invalid request (specialised exception, genral API error)
+                    paymentRepository.findById(UUID.fromString(paymentId)).orElseThrow(() -> new InvalidAPIRequestException("Payment not found for paymentId: " + paymentId));
              return List.of(new PaymentResponse(payment.getOrder().getOrderId().toString(),
-                    payment.getUser().getUserId().toString(),
+                    payment.getUserId().toString(),
                     payment.getStatus().toString(),
                     payment.getError(),
                     payment.getTimestamp().toString()));
         }
-        throw new InvalidAPIParameterException("Invalid request: either orderId or paymentId must be provided");
+        throw new InvalidAPIRequestException("Invalid request: either orderId or paymentId must be provided");
     }
 }

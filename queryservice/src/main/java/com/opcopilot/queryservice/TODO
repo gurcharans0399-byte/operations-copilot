@@ -8,6 +8,12 @@
     - (Done) Log systemMessage only Once - customLogger
     - (Done) Add advisor with chat Memory for better results -
 2. Add basic tests
+3. Check if urls are actually provided in all user/** apis
+4. Make human verification of write response mandatory before confirming the refund
+5. Refactor
+6. Make video
+7. Add token count to API response
+8. Fix manualActionRequired flag
 4. (Don) separate out chatclient configuration
     - (Done) Default system message to the ChatClient
     - (Done) Default tools

@@ -2,6 +2,8 @@ package com.demo.authservice.controller;
 
 import com.demo.authservice.dto.AuthTokenResponse;
 import com.demo.authservice.dto.LoginRequest;
+import com.demo.authservice.exception.AuthCredentialExceptions;
+import com.demo.authservice.exception.InvalidAPIParameterException;
 import com.demo.authservice.model.User;
 import com.demo.authservice.service.JwtService;
 import com.demo.authservice.service.UserService;
@@ -33,12 +35,12 @@ public class AuthController {
         String password = loginRequest.getPassword();
 
         if (email == null || email.isBlank() || password == null || password.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "email and password are required");
+            throw new InvalidAPIParameterException("email and password are required");
         }
 
         Optional<User> authenticatedUser = userService.authenticateUser(email, password);
         if (authenticatedUser.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+            throw new AuthCredentialExceptions("Invalid email or password");
         }
 
         User user = authenticatedUser.get();

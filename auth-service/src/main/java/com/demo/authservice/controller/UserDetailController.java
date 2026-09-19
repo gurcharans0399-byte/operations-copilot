@@ -1,6 +1,7 @@
 package com.demo.authservice.controller;
 
 import com.demo.authservice.dto.UserDetailResponse;
+import com.demo.authservice.exception.InvalidAPIParameterException;
 import com.demo.authservice.model.User;
 import com.demo.authservice.service.UserService;
 import org.springframework.http.HttpStatus;
@@ -26,12 +27,12 @@ public class UserDetailController {
     @GetMapping("/{email}")
     public ResponseEntity<UserDetailResponse> getUserByEmail(@PathVariable String email) {
         if (email == null || email.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "email is required");
+            throw new InvalidAPIParameterException("email is required");
         }
 
         Optional<User> user = userService.getUserByEmail(email);
         if (user.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+            throw new InvalidAPIParameterException("User not found");
         }
 
         User foundUser = user.get();
